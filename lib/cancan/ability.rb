@@ -64,7 +64,7 @@ module CanCan
       subject = extract_subjects(subject)
 
       match = subject.map do |subject|
-        relevant_rules_for_match(action, subject).detect do |rule|
+        relevant_rules(action, subject).detect do |rule|
           rule.matches_conditions?(action, subject, extra_args)
         end
       end.compact.first
@@ -132,8 +132,8 @@ module CanCan
     #     # check the database and return true/false
     #   end
     #
-    def can(action = nil, subject = nil, conditions = nil, &block)
-      add_rule(Rule.new(true, action, subject, conditions, block))
+    def can(action = nil, subject = nil, conditions = nil, custom_where_conditions = nil, &block)
+      add_rule(Rule.new(true, action, subject, conditions, custom_where_conditions, self, block))
     end
 
     # Defines an ability which cannot be done. Accepts the same arguments as "can".
@@ -148,8 +148,8 @@ module CanCan
     #     product.invisible?
     #   end
     #
-    def cannot(action = nil, subject = nil, conditions = nil, &block)
-      add_rule(Rule.new(false, action, subject, conditions, block))
+    def cannot(action = nil, subject = nil, conditions = nil, custom_where_conditions = nil, &block)
+      add_rule(Rule.new(false, action, subject, conditions, custom_where_conditions, self, block))
     end
 
     # Alias one or more actions into another one.
@@ -247,7 +247,9 @@ module CanCan
 
     def merge(ability)
       ability.rules.each do |rule|
-        add_rule(rule.dup)
+        rule = rule.dup
+        rule.ability = self
+        add_rule(rule)
       end
       self
     end
@@ -378,14 +380,6 @@ module CanCan
         positions = @rules_index.values_at(subject, *alternative_subjects(subject))
         positions.flatten!.sort!
         positions.map { |i| @rules[i] }
-      end
-    end
-
-    def relevant_rules_for_match(action, subject)
-      relevant_rules(action, subject).each do |rule|
-        if rule.only_raw_sql?
-          raise Error, "The can? and cannot? call cannot be used with a raw sql 'can' definition. The checking code cannot be determined for #{action.inspect} #{subject.inspect}"
-        end
       end
     end
 

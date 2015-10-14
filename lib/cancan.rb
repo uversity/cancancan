@@ -22,3 +22,13 @@ end
 
 require 'cancan/model_adapters/mongoid_adapter' if defined?(Mongoid) && defined?(Mongoid::Document)
 require 'cancan/model_adapters/sequel_adapter' if defined? Sequel
+
+module CanCan
+  def self.current_ability
+    Thread.current['current_ability']
+  end
+
+  def self.current_ability=(ability)
+    Thread.current['current_ability'] = ability
+  end
+end
