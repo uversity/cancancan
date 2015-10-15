@@ -88,7 +88,8 @@ module CanCan
               conditions_sql = @rules.map { |rule| "(#{sanitize_sql(rule.where_conditions)})" }
               conditions_sql = conditions_sql.join(" OR ")
               #TODO should use build_relation?
-              @model_class.where(conditions_sql).joins(join_array)}
+              @model_class.where(conditions_sql).joins(join_array)
+            end
           end
         else
           @model_class.all(:conditions => conditions, :joins => joins)
@@ -98,7 +99,7 @@ module CanCan
       private
 
       def mergeable_conditions?
-        @rules.find {|rule| rule.unmergeable? }.blank?
+        @rules.find { |rule| rule.unmergeable? }.blank?
       end
 
       def override_scope
