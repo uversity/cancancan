@@ -75,14 +75,14 @@ module CanCan
         elsif @model_class.respond_to?(:where) && @model_class.respond_to?(:joins)
           # if any one rule has no conditions (e.g. it always applies), then there's no reason to filter at all
 
-          mergeable_conditions = mergeable_conditions?
-          if !mergeable_conditions
+          if !@rules.detect { |rule| rule.conditions_empty? }.nil?
             @model_class.where(nil)
           else
+            mergeable_conditions = mergeable_conditions?
             if mergeable_conditions
               join_array, exclude_keys = joins
-              # @model_class.where(conditions(exclude_keys)).joins(join_array)
-              build_relation(*(@rules.map(&:conditions)))
+              @model_class.where(conditions(exclude_keys)).joins(join_array)
+              # build_relation(*(@rules.map(&:conditions)))
             else
               join_array, exclude_keys = joins
               conditions_sql = @rules.map { |rule| "(#{sanitize_sql(rule.where_conditions)})" }
